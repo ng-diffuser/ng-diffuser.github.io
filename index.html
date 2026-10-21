@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="description"
+        content="Noise-Gated Diffuser (NGD) learn from mixed-quality prior experience via noise-gated state-action modeling">
+  <meta name="keywords" content="Noise-Gated Diffuser, NGD, generative control, prior experience, robot learning">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Noise-Gated Learning from Prior Experience for Generative Control</title>
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Noise-Gated Learning from Prior Experience for Generative Control">
+  <meta property="og:description" content="Noise-Gated Diffuser (NGD) selectively draws supervision from prior experience via noise-gated state-action modeling.">
+  <meta name="twitter:card" content="summary">
+
+  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro"
+        rel="stylesheet">
+
+  <link rel="stylesheet" href="./static/css/bulma.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-carousel.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-slider.min.css">
+  <link rel="stylesheet" href="./static/css/fontawesome.all.min.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link rel="stylesheet" href="./static/css/index.css">
+  <!-- <link rel="icon" href="./static/images/favicon.svg"> -->
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script defer src="./static/js/fontawesome.all.min.js"></script>
+  <script src="./static/js/bulma-carousel.min.js"></script>
+  <script src="./static/js/bulma-slider.min.js"></script>
+  <script src="./static/js/index.js"></script>
+
+  <!-- KaTeX for inline LaTeX math such as $\tau = 0.6$ -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+</head>
+<body>
+
+
+<section class="hero">
+  <div class="hero-body">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered">
+        <div class="column has-text-centered">
+          <h1 class="title is-1 publication-title">Noise-Gated Learning from Prior Experience for Generative Control</h1>
+          <div class="is-size-5 publication-authors">
+            <span class="author-block">
+                <a href="https://zilaiz.github.io/" target="_blank">Zilai Zeng</a><sup>1</sup></span>
+                <span class="author-block">
+                  <a href="https://scholar.google.com/citations?user=a2sOaZMAAAAJ&hl=en&oi=ao" target="_blank">Chandradithya S Jonnalagadda</a><sup>1</sup></span>
+                  <span class="author-block">
+                    <a href="https://pattonyin.github.io/" target="_blank">Patton Yin</a><sup>1</sup>
+                  </span>
+                  <span class="author-block">
+                    <a href="https://mingxi-jia.github.io/" target="_blank">Mingxi Jia</a><sup>1</sup>
+                  </span>
+                  <span class="author-block">
+                    <a href="https://zitiantang.github.io/" target="_blank">Zitian Tang</a><sup>1</sup>
+                  </span><br>
+                  <span class="author-block">
+                    <a href="https://cs.brown.edu/people/stellex/" target="_blank">Stefanie Tellex</a><sup>1</sup>
+                  </span>
+                  <span class="author-block">
+                    <a href="https://calvinyluo.com/about.html" target="_blank">Calvin Luo</a><sup>1</sup>
+                  </span>
+                  <span class="author-block">
+                    <a href="https://yilundu.github.io/" target="_blank">Yilun Du</a><sup>2</sup>
+                  </span>
+                  <span class="author-block">
+                    <a href="https://chensun.me/" target="_blank">Chen Sun</a><sup>1</sup>
+                  </span>
+          </div>
+
+          <div class="is-size-5 publication-authors">
+            <span class="author-block"><sup>1</sup>Brown University,</span>
+            <span class="author-block"><sup>2</sup>Harvard University</span>
+          </div>
+
+          <div class="column has-text-centered">
+            <div class="publication-links">
+              <!-- PDF Link. -->
+              <span class="link-block">
+                <a href="#"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="fas fa-file-pdf"></i>
+                  </span>
+                  <span>Paper</span>
+                </a>
+              </span>
+              <span class="link-block">
+                <a href="#"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="ai ai-arxiv"></i>
+                  </span>
+                  <span>arXiv</span>
+                </a>
+              </span>
+              <!-- Code Link. -->
+              <span class="link-block">
+                <a href="#"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="fab fa-github"></i>
+                  </span>
+                  <span>Code</span>
+                  </a>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="hero teaser">
+  <div class="container is-max-desktop is-centered has-text-centered">
+    <!-- <h2 class="title is-3">Noise-Gated Diffuser</h2> -->
+    <div class="hero-body">
+      <video id="teaser" autoplay muted loop playsinline height="100%"
+             poster="./static/images/poster_frame_2.png">
+        <source src="./static/videos/ngd_teaser.mp4"
+                type="video/mp4">
+      </video>
+      <h2 class="subtitle has-text-centered">
+        <b>Learning Generative Control from Prior Experience via Noise-Gated State-Action Modeling</b>
+      </h2>
+    </div>
+  </div>
+</section>
+
+
+
+
+<section class="section section-alt" id="overview">
+  <div class="container is-max-desktop">
+    <!-- Abstract. -->
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3 section-title">Overview</h2>
+        <div class="content has-text-justified">
+          <p>
+             We introduce <b>Noise-Gated Diffuser (NGD)</b>, a generative control framework that selectively draws supervision from prior experience beyond limited expert demonstrations. NGD jointly models actions and <b>a compact future-state latent</b> with independent noise levels, inherently defining <b>a two-dimensional noise plane</b> that connects behavior imitation and dynamics modeling through a continuum of learning objectives. We use <b>noise thresholds</b> to select which regions receive supervision from each data source, with a learned embedding making the source identity explicit to the model. This mechanism provides <b>continuous control</b> over which learning objectives are supervised by prior experience, allowing us to extract useful transition structure while limiting the influence of suboptimal behavior.
+          </p>
+        </div>
+      </div>
+    </div>
+    <!--/ Abstract. -->
+  </div>
+</section>
+
+
+<section class="section section-wide" id="experiments">
+  <div class="container is-max-desktop">
+    <h2 class="title is-3 section-title">Experiments</h2>
+
+    <div class="subsection" id="threshold-sweep">
+      <h3 class="title is-4 subsection-title">Impact of Noise Threshold</h3>
+      <div class="subsection-body">
+        <div class="content has-text-justified">
+        <p>
+          We study how the noise threshold $\tau$ applied to prior experience affects performance on simulated and real-robot manipulation tasks.
+        </p>
+        <ul>
+          <li><b>High $\tau$</b> (close to 1): prior supervision is confined to near-clean dynamics objectives, discarding useful structure that could be learned from partially corrupted inputs.</li>
+          <li><b>Low $\tau$</b> ($\tau = 0$): every objective on the noise plane is supervised by prior experience, including those tied to the recorded prior behavior, which can encourage imitation of suboptimal actions.</li>
+          <li><b>Intermediate $\tau$</b>: balances the reliability and breadth of supervision drawn from prior experience, and performs best in our experiments.</li>
+        </ul>
+        </div>
+        <video id="tausweep" autoplay muted loop playsinline height="100%">
+          <source src="./static/videos/noise_threshold_sweep.mp4"
+                  type="video/mp4">
+        </video>
+      </div>
+    </div>
+
+    <div class="subsection" id="baselines">
+      <h3 class="title is-4 subsection-title">Comparison with Baselines</h3>
+      <div class="subsection-body">
+        <div class="content has-text-justified">
+          <p>Without quality labels on the target task, NGD with an intermediate threshold achieves the best performance across all evaluated settings.</p>
+        </div>
+        <video id="table1" autoplay muted loop playsinline height="100%">
+          <source src="./static/videos/table1_results_full.mp4"
+                  type="video/mp4">
+        </video>
+
+        <div class="subsection-panel">
+          <h4 class="title is-5 gallery-subtitle">Real-Robot Evaluation</h4>
+          <div class="content has-text-justified">
+            <p>On real-robot tasks, NGD with an intermediate threshold completes the tasks, while the baselines either fail to approach the target object or execute imprecise grasps.</p>
+          </div>
+          <div class="gallery-controls">
+            <span class="gallery-control-label">Task</span>
+            <div class="buttons has-addons is-centered gallery-switch" data-gallery="baseline" data-key="task">
+              <button class="button is-rounded" data-value="coffee">CoffeePod &amp; Gear</button>
+              <button class="button is-rounded" data-value="drawer">Drawer Cleanup</button>
+            </div>
+          </div>
+          <div class="columns is-mobile is-multiline is-centered gallery-grid" id="baseline-grid"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="subsection" id="prior-data">
+      <h3 class="title is-4 subsection-title">Effect of Prior Data Scale</h3>
+      <div class="subsection-body">
+        <div class="content has-text-justified">
+          <p>We further study how the amount of prior experience affects NGD performance. In the results below, we show that NGD scales effectively with prior experience, improving faster than the baseline as more prior data is added.</p>
+        </div>
+        <figure class="result-figure">
+          <img src="./static/images/prior_data_scale.png"
+               alt="Performance of NGD as the fraction of prior data increases">
+        </figure>
+        <div class="gallery-controls-row">
+          <div class="gallery-controls gallery-controls-inline">
+            <span class="gallery-control-label">Task</span>
+            <div class="buttons has-addons is-centered gallery-switch" data-gallery="prior" data-key="task">
+              <button class="button is-rounded" data-value="coffee">CoffeePod &amp; Gear</button>
+              <button class="button is-rounded" data-value="drawer">Drawer Cleanup</button>
+            </div>
+          </div>
+          <div class="gallery-controls gallery-controls-inline">
+            <span class="gallery-control-label">Initial state</span>
+            <div class="buttons has-addons is-centered gallery-switch" data-gallery="prior" data-key="state">
+              <button class="button is-rounded" data-value="1">State 1</button>
+              <button class="button is-rounded" data-value="2">State 2</button>
+            </div>
+          </div>
+        </div>
+        <div class="columns is-mobile is-multiline is-centered gallery-grid" id="prior-grid"></div>
+        <div class="subsection-panel">
+          <div class="content has-text-justified">
+            <p>Moreover, NGD outperforms baselines trained on trajectories filtered by oracle trajectory-level success labels, showing its robustness to suboptimal behavior in prior experience.</p>
+          </div>
+          <figure class="result-figure">
+            <img src="./static/images/filtered_ratio_sweep.png"
+                 alt="Sweep over the filtered ratio of prior data">
+          </figure>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<section class="section section-alt" id="BibTeX">
+  <div class="container is-max-desktop content">
+    <div class="bibtex-header">
+      <h2 class="title is-3 section-title">BibTeX</h2>
+      <button class="button is-small is-rounded" id="bibtex-copy" type="button">
+        <span class="icon is-small"><i class="fas fa-copy"></i></span>
+        <span>Copy</span>
+      </button>
+    </div>
+    <pre><code id="bibtex-code">@article{zeng2026ngd,
+  author    = {Zeng, Zilai and Jonnalagadda, Chandradithya S and Yin, Patton and Jia, Mingxi and Tang, Zitian and Tellex, Stefanie and Luo, Calvin and Du, Yilun and Sun, Chen},
+  title     = {Noise-Gated Learning from Prior Experience for Generative Control},
+  journal   = {arXiv},
+  year      = {2026},
+}</code></pre>
+  </div>
+</section>
+
+
+<footer class="footer">
+  <div class="container">
+    <div class="columns is-centered">
+        <div class="content">
+          <p>
+            This website is adapted from <a href="https://nerfies.github.io/">Nerfies</a> and licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">Creative Commons Attribution-ShareAlike 4.0 International License.</a>
+          </p>
+        </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+// ---- Video galleries -------------------------------------------------------
+// Edit the labels / file names here; the markup is generated from this config.
+var GALLERY_BASE = "./static/videos/real_robot_eval/";
+
+var TASK_NAMES = {
+  coffee: "CoffeePod & Gear",
+  drawer: "Drawer Cleanup"
+};
+
+// Gallery 1: NGD vs. baselines on one task.
+var BASELINE_GALLERY = {
+  dirs: { coffee: "coffee", drawer: "drawer" },
+  items: [
+    { file: "dp.mp4",        label: "Diffusion Policy" },
+    { file: "dp_sc.mp4",     label: "Diffusion Policy (Source Cond.)" },
+    { file: "ngd_tau0.mp4",  label: "NGD ($\\tau = 0$)" },
+    { file: "ngd_tau06.mp4", label: "NGD ($\\tau = 0.6$)", highlight: true }
+  ],
+  columnClass: "is-3-tablet is-6-mobile",
+  state: { task: "coffee" },
+  src: function (item, st) {
+    return GALLERY_BASE + this.dirs[st.task] + "/" + item.file;
+  }
+};
+
+// Gallery 2: NGD (tau = 0.6) trained with 0% / 50% / 100% prior data.
+// File prefixes differ slightly between the two task folders.
+var PRIOR_GALLERY = {
+  dirs: { coffee: "coffee_improve_ngd_tau06", drawer: "drawer_improve_ngd_tau06" },
+  prefixes: {
+    coffee: { "0": "nef0", "50": "nef_05", "100": "nef1" },
+    drawer: { "0": "nef0", "50": "nef05",  "100": "nef1" }
+  },
+  items: [
+    { frac: "0",   label: "0% Prior data" },
+    { frac: "50",  label: "50% Prior data" },
+    { frac: "100", label: "Full Prior data" }
+  ],
+  columnClass: "is-3-tablet is-6-mobile",
+  state: { task: "coffee", state: "1" },
+  src: function (item, st) {
+    return GALLERY_BASE + this.dirs[st.task] + "/" +
+           this.prefixes[st.task][item.frac] + "_" + st.state + ".mp4";
+  }
+};
+
+var GALLERIES = { baseline: BASELINE_GALLERY, prior: PRIOR_GALLERY };
+
+// Render LaTeX inside an element (inline $...$ or \\(...\\), display $$...$$ or \\[...\\]).
+function renderMath(el) {
+  if (typeof renderMathInElement !== 'function') return;
+  renderMathInElement(el, {
+    delimiters: [
+      { left: '$$', right: '$$', display: true },
+      { left: '\\[', right: '\\]', display: true },
+      { left: '\\(', right: '\\)', display: false },
+      { left: '$',  right: '$',  display: false }
+    ],
+    throwOnError: false
+  });
+}
+
+function buildGallery(name, gridId) {
+  var g = GALLERIES[name];
+  var $grid = $('#' + gridId).empty();
+  g.items.forEach(function (item, idx) {
+    var $col = $('<div class="column gallery-item ' + g.columnClass + '"></div>');
+    if (item.highlight) $col.addClass('is-highlighted');
+    var $video = $('<video muted loop playsinline preload="none"></video>')
+      .attr('data-gallery', name).attr('data-index', idx);
+    // Split "Name (detail)" into two centered lines: "Name" / "(detail)".
+    var $label = $('<p class="gallery-label"></p>');
+    var m = item.label.match(/^(.*?)\s*(\(.*\))$/);
+    if (m) {
+      $label.text(m[1]).append('<br>').append($('<span class="gallery-sublabel"></span>').text(m[2]));
+    } else {
+      $label.text(item.label);
+    }
+    $col.append($video).append($label);
+    $grid.append($col);
+  });
+  renderMath($grid[0]);
+  refreshGallery(name);
+  // Defer loading the videos until the grid scrolls near the viewport.
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (!e.isIntersecting) return;
+        io.unobserve(e.target);
+        g.visible = true;
+        refreshGallery(name);
+      });
+    }, { rootMargin: '300px 0px' });
+    io.observe($grid[0]);
+  } else {
+    g.visible = true;
+    refreshGallery(name);
+  }
+}
+
+function refreshGallery(name) {
+  var g = GALLERIES[name];
+  var videos = $('video[data-gallery="' + name + '"]').toArray();
+  var pending = videos.length;
+  if (g.visible) videos.forEach(function (v, idx) {
+    var src = g.src(g.items[idx], g.state);
+    v.pause();
+    v.preload = 'auto';
+    v.src = src;
+    v.load();
+    // Start all videos together once every one of them can play.
+    v.oncanplay = function () {
+      v.oncanplay = null;
+      if (--pending === 0) {
+        videos.forEach(function (w) { w.currentTime = 0; w.play(); });
+      }
+    };
+  });
+  // Mark the active buttons.
+  $('.gallery-switch[data-gallery="' + name + '"]').each(function () {
+    var key = $(this).data('key');
+    $(this).find('button').each(function () {
+      var on = String($(this).data('value')) === String(g.state[key]);
+      $(this).toggleClass('is-info is-selected', on);
+    });
+  });
+}
+
+$(document).ready(function () {
+  renderMath(document.body);
+  buildGallery('baseline', 'baseline-grid');
+  buildGallery('prior', 'prior-grid');
+
+  // Copy the BibTeX entry to the clipboard.
+  $('#bibtex-copy').on('click', function () {
+    var $btn = $(this);
+    var text = document.getElementById('bibtex-code').innerText;
+    var done = function () {
+      $btn.find('span:last').text('Copied!');
+      setTimeout(function () { $btn.find('span:last').text('Copy'); }, 1500);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done);
+    } else {
+      var ta = document.createElement('textarea');
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      document.execCommand('copy'); document.body.removeChild(ta); done();
+    }
+  });
+
+  $('.gallery-switch button').on('click', function () {
+    var $group = $(this).closest('.gallery-switch');
+    var name = $group.data('gallery');
+    var key = $group.data('key');
+    var value = String($(this).data('value'));
+    if (String(GALLERIES[name].state[key]) === value) return;
+    GALLERIES[name].state[key] = value;
+    refreshGallery(name);
+  });
+});
+</script>
+
+</body>
+</html>
