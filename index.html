@@ -209,7 +209,7 @@
       <h3 class="title is-4 subsection-title">Effect of Prior Data Scale</h3>
       <div class="subsection-body">
         <div class="content has-text-justified">
-          <p>We further study how the amount of prior experience affects NGD performance. In the results below, we show that NGD scales effectively with prior experience, improving faster than the baseline as more prior data is added.</p>
+          <p>We further study how the amount of prior experience affects NGD performance. In the results below, we show that NGD scales effectively with prior experience, improving faster than the baseline as more prior data is incorporated.</p>
         </div>
         <figure class="result-figure">
           <img src="./static/images/prior_data_scale.png"
@@ -231,7 +231,7 @@
             </div>
           </div>
         </div>
-        <div class="columns is-mobile is-multiline is-centered gallery-grid" id="prior-grid"></div>
+        <div class="columns is-mobile is-multiline is-centered is-variable is-5 gallery-grid" id="prior-grid"></div>
         <div class="subsection-panel">
           <div class="content has-text-justified">
             <p>Moreover, NGD outperforms baselines trained on trajectories filtered by oracle trajectory-level success labels, showing its robustness to suboptimal behavior in prior experience.</p>
@@ -318,6 +318,7 @@ var PRIOR_GALLERY = {
     { frac: "100", label: "Full Prior data" }
   ],
   columnClass: "is-3-tablet is-6-mobile",
+  arrows: true,
   state: { task: "coffee", state: "1" },
   src: function (item, st) {
     return GALLERY_BASE + this.dirs[st.task] + "/" +
@@ -357,7 +358,11 @@ function buildGallery(name, gridId) {
     } else {
       $label.text(item.label);
     }
-    $col.append($video).append($label);
+    var $wrap = $('<div class="gallery-video-wrap"></div>').append($video);
+    if (g.arrows && idx < g.items.length - 1) {
+      $wrap.append('<span class="gallery-arrow" aria-hidden="true"><i class="fas fa-long-arrow-alt-right"></i></span>');
+    }
+    $col.append($wrap).append($label);
     $grid.append($col);
   });
   renderMath($grid[0]);

@@ -220,6 +220,32 @@ body {
   background: #000;
 }
 
+/* Arrow sitting in the gutter between consecutive tiles, centred on the video. */
+.gallery-video-wrap {
+  position: relative;
+}
+
+.gallery-arrow {
+  position: absolute;
+  top: 50%;
+  right: -0.75rem;             /* half the default Bulma column gutter */
+  transform: translate(50%, -50%);
+  font-size: 1.1rem;
+  color: #7a7f87;
+  line-height: 1;
+  pointer-events: none;
+}
+
+/* Wider gutter (Bulma is-variable is-5: 1.25rem per side) with a longer arrow. */
+.gallery-grid.is-variable.is-5 .gallery-arrow {
+  right: -1.25rem;
+  font-size: 1.75rem;
+}
+
+@media screen and (max-width: 768px) {
+  .gallery-arrow { display: none; }
+}
+
 .gallery-label {
   margin-top: 0.5rem;
   font-size: 1.15rem;
