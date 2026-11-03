@@ -21,7 +21,7 @@
   <link rel="stylesheet" href="./static/css/fontawesome.all.min.css">
   <link rel="stylesheet"
         href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
-  <link rel="stylesheet" href="./static/css/index.css">
+  <link rel="stylesheet" href="./static/css/index.css?v=20261103b">
   <!-- <link rel="icon" href="./static/images/favicon.svg"> -->
 
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
@@ -120,11 +120,22 @@
   <div class="container is-max-desktop is-centered has-text-centered">
     <!-- <h2 class="title is-3">Noise-Gated Diffuser</h2> -->
     <div class="hero-body">
-      <video id="teaser" autoplay muted loop playsinline height="100%"
-             poster="./static/images/poster_frame_2.png">
-        <source src="./static/videos/ngd_teaser.mp4"
-                type="video/mp4">
-      </video>
+      <div class="teaser-player">
+        <video id="teaser" autoplay muted loop playsinline height="100%"
+               poster="./static/images/poster_frame_2.png">
+          <source src="./static/videos/ngd_teaser.mp4"
+                  type="video/mp4">
+        </video>
+        <div class="teaser-controls">
+          <button class="teaser-toggle" type="button" aria-label="Pause">
+            <i class="fas fa-pause icon-pause"></i>
+            <i class="fas fa-play icon-play"></i>
+          </button>
+          <div class="teaser-progress" role="slider" aria-label="Seek" tabindex="0">
+            <div class="teaser-progress-fill"></div>
+          </div>
+        </div>
+      </div>
       <h2 class="subtitle has-text-centered">
         <b>Learning Generative Control from Prior Experience via Noise-Gated State-Action Modeling</b>
       </h2>
@@ -181,12 +192,17 @@
       <h3 class="title is-4 subsection-title">Comparison with Baselines</h3>
       <div class="subsection-body">
         <div class="content has-text-justified">
-          <p>Without quality labels on the target task, NGD with an intermediate threshold achieves the best performance across all evaluated settings.</p>
+          <p>We compare NGD with baselines that (1) uses only limited expert demonstrations and (2) incorporates prior experience without target-task quality labels. </p>
         </div>
-        <video id="table1" autoplay muted playsinline height="100%">
-          <source src="./static/videos/table1_results_full.mp4"
-                  type="video/mp4">
-        </video>
+        <div class="gallery-controls">
+          <div class="buttons has-addons is-centered" id="table1-stages">
+            <button class="button is-rounded" data-stage="0">Expert Only</button>
+            <button class="button is-rounded" data-stage="1">Expert &amp; Prior (Baselines)</button>
+            <button class="button is-rounded is-ngd" data-stage="2">Expert &amp; Prior (NGD)</button>
+          </div>
+        </div>
+        <div class="t1-panel" id="table1-panel"></div>
+        <p class="t1-caption" id="table1-caption"></p>
 
         <div class="subsection-panel">
           <h4 class="title is-5 gallery-subtitle">Real-Robot Evaluation</h4>
@@ -231,7 +247,7 @@
             </div>
           </div>
         </div>
-        <div class="columns is-mobile is-multiline is-centered is-variable is-5 gallery-grid" id="prior-grid"></div>
+        <div class="columns is-mobile is-multiline is-centered is-variable gallery-grid gallery-grid-wide" id="prior-grid"></div>
         <div class="subsection-panel">
           <div class="content has-text-justified">
             <p>Moreover, NGD remains competitive with baselines trained on trajectories filtered by oracle trajectory-level success labels, showing its robustness to suboptimal behavior in prior experience.</p>
@@ -412,8 +428,216 @@ function refreshGallery(name) {
   });
 }
 
+// ---- Table 1: interactive success-rate chart ---------------------------------
+// Values transcribed from table1_results_full.mp4; null = no result for that domain.
+var TABLE1 = {
+  domains: ["Robomimic", "DexMimicGen", "Real Robot"],
+  rows: [
+    { type: "group",    stage: 0, html: '<span class="t1-green">Expert Only</span>' },
+    { label: "DP",                  stage: 0, color: "green",     values: [55.3, 50.3, 22.5] },
+    { label: "Joint State\u2013Action", stage: 0, color: "green", values: [56.7, 51.2, 40.0] },
+    { type: "group",    stage: 1, html: '<span class="t1-green">Expert</span> &amp; <span class="t1-purple">Prior</span>' },
+    { label: "DWBC",                stage: 1, color: "gray",      values: [23.2, 37.3, null] },
+    { type: "subgroup", stage: 1, label: "DP" },
+    { label: "NP",                  stage: 1, color: "gray",      values: [42.8, 49.2, 42.5] },
+    { label: "Ambient",             stage: 1, color: "gray",      values: [55.3, 52.3, null] },
+    { label: "SC",                  stage: 1, color: "gray",      values: [59.2, 53.3, 65.0] },
+    { label: "SC w/ CFG",           stage: 1, color: "gray",      values: [58.8, 51.8, 52.5] },
+    { type: "subgroup", stage: 1, label: "Joint State\u2013Action" },
+    { label: "NP",                  stage: 1, color: "gray",      values: [44.1, 50.4, 47.5] },
+    { label: "NGD ($\\tau = 0$)",     stage: 2, color: "ngd-light", values: [60.7, 54.3, 75.0] },
+    { label: "NGD ($\\tau = \\tau_b$)", stage: 2, color: "ngd", bold: true, values: [63.0, 59.6, 85.0] }
+  ],
+  captions: [
+    "When only limited expert demonstrations are provided, Joint State-Action Model marginally outperforms DP in simulation and enables more improvements on real robot tasks.",
+    "When incorporating prior experience, DWBC performs poorly on both simulation suites, naive pooling (NP) degrades performance in simulation, and source conditioning (SC) prevents collaspe by distinguishing data source identity.",
+    "NGD with an intermediate threshold draws the most benefit from prior experience and achieves the highest success rate in all three settings."
+  ],
+  stage: 2,
+  revealed: false
+};
+
+function buildTable1() {
+  var $panel = $('#table1-panel');
+  if (!$panel.length) return;
+  var n = TABLE1.domains.length;
+  var $grid = $('<div class="t1-grid"></div>').css('--t1-cols', n);
+
+  // Header row: blank label cell + domain names.
+  $grid.append('<div></div>');
+  TABLE1.domains.forEach(function (d) {
+    $grid.append($('<div class="t1-domain"></div>').text(d));
+  });
+
+  TABLE1.rows.forEach(function (row) {
+    var cls = 't1-row t1-stage-' + row.stage;
+    if (row.type === 'group') {
+      $grid.append($('<div class="t1-group ' + cls + '"></div>').html(row.html));
+      return;
+    }
+    if (row.type === 'subgroup') {
+      $grid.append($('<div class="t1-subgroup ' + cls + '"></div>').text(row.label));
+      for (var k = 0; k < n; k++) $grid.append('<div class="t1-rule ' + cls + '"></div>');
+      return;
+    }
+    var $label = $('<div class="t1-label ' + cls + ' is-' + row.color + '"></div>').text(row.label);
+    if (row.bold) $label.addClass('is-bold');
+    $grid.append($label);
+    row.values.forEach(function (v) {
+      var $cell = $('<div class="t1-bar ' + cls + ' is-' + row.color + '"></div>');
+      if (v === null) {
+        $cell.append('<span class="t1-na">\u2013</span>');
+      } else {
+        $cell.css('--w', v + '%');
+        var $track = $('<div class="t1-track"></div>');
+        $track.append('<div class="t1-fill"></div>');
+        $track.append($('<span class="t1-value"></span>').text(v.toFixed(1) + '%'));
+        $cell.append($track);
+      }
+      $grid.append($cell);
+    });
+  });
+
+  // Axis row.
+  $grid.append('<div></div>');
+  TABLE1.domains.forEach(function () {
+    $grid.append('<div class="t1-axis"><div class="t1-ticks"><span>0</span><span>50</span><span>100</span></div>' +
+                 '<div class="t1-axis-title">Average success rate (%)</div></div>');
+  });
+
+  $panel.empty().append($grid);
+  renderMath($panel[0]);
+
+  // Buttons.
+  $('#table1-stages button').on('click', function () {
+    var st = parseInt($(this).data('stage'), 10);
+    if (st === TABLE1.stage) return;
+    var replay = st < TABLE1.stage;   // stepping down: regrow the rows that remain
+    TABLE1.stage = st;
+    applyTable1Stage(replay);
+  });
+
+  // Animate bars in the first time the panel scrolls into view.
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (!e.isIntersecting) return;
+        io.unobserve(e.target);
+        TABLE1.revealed = true;
+        applyTable1Stage();
+      });
+    }, { rootMargin: '100px 0px' });
+    io.observe($panel[0]);
+    applyTable1Stage();           // sets up rows hidden/visible without animating
+  } else {
+    TABLE1.revealed = true;
+    applyTable1Stage();
+  }
+}
+
+function applyTable1Stage(replayAll) {
+  var stage = TABLE1.stage;
+  $('#table1-stages button').each(function () {
+    var on = parseInt($(this).data('stage'), 10) === stage;
+    $(this).toggleClass('is-selected', on);
+    $(this).toggleClass('is-info', on && !$(this).hasClass('is-ngd'));
+    $(this).toggleClass('is-ngd-active', on && $(this).hasClass('is-ngd'));
+  });
+  // Caption under the panel, swapped with a short fade.
+  var $cap = $('#table1-caption');
+  if ($cap.text() !== TABLE1.captions[stage]) {
+    $cap.addClass('is-fading');
+    setTimeout(function () {
+      $cap.text(TABLE1.captions[stage]).removeClass('is-fading');
+    }, $cap.text() ? 150 : 0);
+  }
+  var $fresh = $();   // rows that become visible with this change
+  for (var st = 0; st <= 2; st++) {
+    var $rows = $('#table1-panel .t1-stage-' + st);
+    if (st > stage) {
+      $rows.removeClass('is-shown').addClass('is-hidden-row');
+    } else {
+      $rows.removeClass('is-hidden-row');
+      if (replayAll) {
+        // Snap already-drawn bars back to zero without animating, then regrow them.
+        $rows.addClass('is-resetting').removeClass('is-shown');
+        if ($rows.length) { void $rows[0].offsetWidth; }   // force reflow so the snap applies
+        $rows.removeClass('is-resetting');
+      }
+      $fresh = $fresh.add($rows.not('.is-shown'));
+    }
+  }
+  // Newly displayed rows grow in on the next frame (all stages at once, so the
+  // result depends only on the selected stage, not on the click order).
+  if (TABLE1.revealed && $fresh.length) {
+    // Force a layout pass so the browser registers the rows at width 0
+    // before the reveal class is added; otherwise Firefox skips the transition.
+    void $fresh[0].offsetWidth;
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () { $fresh.addClass('is-shown'); });
+    });
+  }
+}
+
+// ---- Teaser video: play/pause button + seekable progress bar -----------------
+function setupTeaserPlayer() {
+  var video = document.getElementById('teaser');
+  var $player = $(video).closest('.teaser-player');
+  if (!video || !$player.length) return;
+  var $toggle = $player.find('.teaser-toggle');
+  var $bar = $player.find('.teaser-progress');
+  var $fill = $player.find('.teaser-progress-fill');
+
+  // Font Awesome swaps <i> tags for <svg>, so toggle a class on the button
+  // and let CSS pick which of the two icons is shown.
+  function syncIcon() {
+    var paused = video.paused;
+    $toggle.toggleClass('is-paused', paused);
+    $player.toggleClass('is-paused', paused);   // keeps the overlay visible while paused
+    $toggle.attr('aria-label', paused ? 'Play' : 'Pause');
+  }
+
+  // Touch screens have no hover: show the overlay on tap, hide it again after a moment.
+  var touchTimer = null;
+  $player.on('touchstart', function () {
+    $player.addClass('is-touched');
+    clearTimeout(touchTimer);
+    touchTimer = setTimeout(function () { $player.removeClass('is-touched'); }, 2500);
+  });
+  function syncFill() {
+    if (video.duration) $fill.css('width', (video.currentTime / video.duration * 100) + '%');
+  }
+  function seekTo(clientX) {
+    var rect = $bar[0].getBoundingClientRect();
+    var frac = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
+    if (video.duration) { video.currentTime = frac * video.duration; syncFill(); }
+  }
+
+  $toggle.on('click', function () { video.paused ? video.play() : video.pause(); });
+  $(video).on('click', function () { video.paused ? video.play() : video.pause(); });
+  $(video).on('play pause ended', syncIcon);
+  $(video).on('timeupdate seeked loadedmetadata', syncFill);
+
+  // Click or drag on the bar to seek.
+  var dragging = false;
+  $bar.on('mousedown', function (e) { dragging = true; seekTo(e.clientX); e.preventDefault(); });
+  $(document).on('mousemove', function (e) { if (dragging) seekTo(e.clientX); });
+  $(document).on('mouseup', function () { dragging = false; });
+  $bar.on('touchstart touchmove', function (e) { seekTo(e.originalEvent.touches[0].clientX); });
+  $bar.on('keydown', function (e) {
+    if (!video.duration) return;
+    if (e.key === 'ArrowRight') video.currentTime = Math.min(video.duration, video.currentTime + 2);
+    if (e.key === 'ArrowLeft')  video.currentTime = Math.max(0, video.currentTime - 2);
+  });
+
+  syncIcon();
+  syncFill();
+}
+
 $(document).ready(function () {
   renderMath(document.body);
+  setupTeaserPlayer();
+  buildTable1();
   buildGallery('baseline', 'baseline-grid');
   buildGallery('prior', 'prior-grid');
 

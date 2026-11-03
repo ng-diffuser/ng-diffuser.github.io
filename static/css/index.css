@@ -158,18 +158,13 @@ body {
 
 
 /* ---- Video galleries ---- */
+/* Label + buttons centred together as one unit. */
 .gallery-controls {
-  /* Three columns: label | buttons | spacer. The side columns are equal,
-     so the buttons are centered on the column regardless of label width. */
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  display: flex;
   align-items: center;
-  column-gap: 0.75rem;
+  justify-content: center;
+  gap: 0.75rem;
   margin-bottom: 0.75rem;
-}
-
-.gallery-controls .buttons {
-  justify-self: center;
 }
 
 /* Several control groups on one row (label and buttons stay adjacent). */
@@ -183,8 +178,6 @@ body {
 }
 
 .gallery-controls.gallery-controls-inline {
-  display: flex;
-  gap: 0.75rem;
   margin-bottom: 0;
 }
 
@@ -236,9 +229,23 @@ body {
   pointer-events: none;
 }
 
-/* Wider gutter (Bulma is-variable is-5: 1.25rem per side) with a longer arrow. */
-.gallery-grid.is-variable.is-5 .gallery-arrow {
-  right: -1.25rem;
+/* Wide gutter for the prior-data progression; the arrow follows the gap size. */
+.columns.is-variable.gallery-grid-wide {
+  --columnGap: 3rem;          /* per side, so 6rem between tiles */
+}
+
+/* Keep each tile's video the same size as a baseline-gallery tile (a quarter
+   of the box at the default 0.75rem gutter), and let the extra gutter come
+   out of the row's spare width instead of the video. */
+@media screen and (min-width: 769px) {
+  .columns.gallery-grid-wide > .column.gallery-item {
+    flex: none;
+    width: calc((100% + 1.5rem) / 4 - 1.5rem + 1.5 * var(--columnGap));
+  }
+}
+
+.gallery-grid.is-variable .gallery-arrow {
+  right: calc(-1 * var(--columnGap));
   font-size: 1.75rem;
 }
 
@@ -383,4 +390,266 @@ body {
   display: block;
   width: 100%;
   border-radius: 10px;
+}
+
+/* ---- Teaser player controls ---- */
+.teaser-player {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+  line-height: 0;
+  overflow: hidden;
+}
+
+.teaser-player video {
+  display: block;
+  max-width: 100%;
+  cursor: pointer;
+}
+
+/* Overlay on the bottom edge of the video; hidden until hover, touch, focus or pause. */
+.teaser-controls {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.5rem 1rem 0.75rem;
+  line-height: 1;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0));
+  opacity: 0;
+  transition: opacity 0.25s;
+  pointer-events: none;
+}
+
+.teaser-player:hover .teaser-controls,
+.teaser-player.is-paused .teaser-controls,
+.teaser-player.is-touched .teaser-controls,
+.teaser-controls:focus-within {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.teaser-toggle {
+  flex: 0 0 auto;
+  width: 2rem;
+  height: 2rem;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  color: #363636;
+  font-size: 0.8rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.teaser-toggle:hover {
+  background: hsl(204, 86%, 53%);
+  color: #fff;
+}
+
+/* Show one of the two icons depending on the button state. */
+.teaser-toggle .icon-play,
+.teaser-toggle.is-paused .icon-pause {
+  display: none;
+}
+
+.teaser-toggle.is-paused .icon-play {
+  display: inline-block;
+  margin-left: 2px;   /* optically centre the triangle */
+}
+
+.teaser-progress {
+  flex: 1 1 auto;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.teaser-progress:focus {
+  outline: 2px solid rgba(255, 255, 255, 0.8);
+  outline-offset: 2px;
+}
+
+.teaser-progress-fill {
+  width: 0;
+  height: 100%;
+  background: hsl(204, 86%, 53%);
+  border-radius: 3px;
+}
+
+/* ---- Table 1 interactive chart ---- */
+.t1-panel {
+  margin-top: 1rem;
+  --t1-value-room: 3.25rem;   /* space reserved after each bar for its value label */
+}
+
+.t1-grid {
+  display: grid;
+  grid-template-columns: minmax(8rem, 11rem) repeat(var(--t1-cols, 3), minmax(0, 1fr));
+  column-gap: 1.5rem;
+  row-gap: 0.4rem;
+  align-items: center;
+  padding: 0.25rem 0.5rem;
+}
+
+.t1-domain {
+  text-align: center;
+  font-size: 1.15rem;
+  font-weight: 600;
+  padding-bottom: 0.4rem;
+}
+
+.t1-group {
+  grid-column: 1 / -1;
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin-top: 0.6rem;
+}
+
+.t1-green  { color: #0a9d6c; }
+.t1-purple { color: #7e57a3; }
+
+.t1-subgroup {
+  text-align: right;
+  padding-right: 0.5rem;
+  font-weight: 700;
+  margin-top: 0.3rem;
+}
+
+.t1-rule {
+  border-bottom: 1px solid #e3e6ea;
+  height: 1px;
+  align-self: end;
+  margin-right: var(--t1-value-room);
+}
+
+.t1-label {
+  text-align: right;
+  padding-right: 0.5rem;
+  font-size: 0.95rem;
+  color: #363636;
+}
+
+.t1-label.is-ngd-light,
+.t1-label.is-ngd { color: #7e57a3; }
+.t1-label.is-bold { font-weight: 700; }
+
+.t1-bar {
+  height: 18px;
+  padding-right: var(--t1-value-room);
+}
+
+/* The track is the 0-100% range; the value label lives in the reserved room to its right. */
+.t1-track {
+  position: relative;
+  height: 100%;
+}
+
+.t1-fill {
+  height: 100%;
+  width: 0;
+  border-radius: 2px;
+  transition: width 0.9s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.t1-bar.is-green     .t1-fill { background: #0a9d6c; }
+.t1-bar.is-gray      .t1-fill { background: #a9a9a9; }
+.t1-bar.is-ngd-light .t1-fill { background: #c4ace0; }
+.t1-bar.is-ngd       .t1-fill { background: #7e57a3; }
+
+.t1-value {
+  position: absolute;
+  top: 50%;
+  left: calc(var(--w) + 0.4rem);
+  transform: translateY(-50%);
+  font-size: 0.8rem;
+  color: #555;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.4s;
+}
+
+.t1-bar.is-ngd-light .t1-value,
+.t1-bar.is-ngd       .t1-value { color: #7e57a3; }
+.t1-bar.is-ngd       .t1-value { font-weight: 700; }
+
+.t1-na {
+  font-size: 0.85rem;
+  color: #999;
+  line-height: 18px;
+}
+
+/* Reveal state */
+.t1-row.is-shown .t1-fill  { width: var(--w); }
+.t1-row.is-shown .t1-value { opacity: 1; transition-delay: 0.7s; }
+.t1-row.is-hidden-row      { display: none; }
+.t1-row.is-resetting .t1-fill,
+.t1-row.is-resetting .t1-value { transition: none; }
+
+/* Axis */
+.t1-axis {
+  margin-top: 0.75rem;
+  margin-right: var(--t1-value-room);   /* keep the 100 tick under the end of the bars */
+  border-top: 1px solid #888;
+  padding-top: 0.2rem;
+}
+
+.t1-ticks {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: #555;
+}
+
+.t1-axis-title {
+  text-align: center;
+  font-size: 0.85rem;
+  color: #555;
+  margin-top: 0.15rem;
+}
+
+/* NGD stage button: purple outline when idle, filled purple when selected. */
+.button.is-ngd {
+  border-color: #7e57a3;
+  color: #7e57a3;
+}
+
+.button.is-ngd:hover {
+  border-color: #6f4b93;
+  color: #6f4b93;
+}
+
+.button.is-ngd-active {
+  background-color: #7e57a3;
+  border-color: #7e57a3;
+  color: #fff;
+}
+
+.button.is-ngd-active:hover,
+.button.is-ngd-active:focus {
+  background-color: #6f4b93;
+  color: #fff;
+}
+
+/* Caption under the Table 1 panel, changes with the selected stage. */
+.t1-caption {
+  display: block;
+  width: 100%;
+  margin: 1rem 0 0;
+  text-align: left !important;
+  font-size: 1rem;
+  color: #4a4a4a;
+  min-height: 1.5em;
+  transition: opacity 0.15s;
+}
+
+.t1-caption.is-fading {
+  opacity: 0;
 }
