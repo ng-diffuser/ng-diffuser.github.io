@@ -181,7 +181,7 @@
           <li><b>Intermediate $\tau$</b>: balances the reliability and breadth of supervision drawn from prior experience, and performs best in our experiments.</li>
         </ul>
         </div>
-        <video id="tausweep" autoplay muted loop playsinline height="100%">
+        <video id="tausweep" muted loop playsinline preload="metadata" height="100%" data-play-on-view>
           <source src="./static/videos/noise_threshold_sweep.mp4"
                   type="video/mp4">
         </video>
@@ -517,6 +517,7 @@ function buildTable1() {
   renderMath($panel[0]);
 
   if (TABLE1.mode === 'pin') initTable1Scroll(); else initTable1Auto();
+  setupPlayOnView();
 
   // Animate bars in the first time the panel scrolls into view (pin mode only;
   // auto mode starts its own sequence).
@@ -537,6 +538,30 @@ function buildTable1() {
     TABLE1.revealed = true;
     applyTable1Stage();
   }
+}
+
+// Videos marked data-play-on-view start from the beginning when they scroll
+// into view, and pause when they leave, so the animation is seen from its start.
+function setupPlayOnView() {
+  var videos = document.querySelectorAll('video[data-play-on-view]');
+  if (!videos.length) return;
+  if (!('IntersectionObserver' in window)) {
+    videos.forEach(function (v) { v.play(); });
+    return;
+  }
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      var v = e.target;
+      if (e.isIntersecting) {
+        v.currentTime = 0;
+        var p = v.play();
+        if (p && p.catch) p.catch(function () {});
+      } else {
+        v.pause();
+      }
+    });
+  }, { threshold: 0.5 });
+  videos.forEach(function (v) { io.observe(v); });
 }
 
 // Auto mode: when the chart comes into view, play Expert Only -> Baselines -> NGD
