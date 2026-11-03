@@ -589,7 +589,7 @@ body {
 /* Reveal state */
 .t1-row.is-shown .t1-fill  { width: var(--w); }
 .t1-row.is-shown .t1-value { opacity: 1; transition-delay: 0.7s; }
-.t1-row.is-hidden-row      { display: none; }
+.t1-row.is-hidden-row      { visibility: hidden; }   /* keep layout fixed; rows appear in place */
 .t1-row.is-resetting .t1-fill,
 .t1-row.is-resetting .t1-value { transition: none; }
 
@@ -652,4 +652,19 @@ body {
 
 .t1-caption.is-fading {
   opacity: 0;
+}
+
+/* ---- Table 1 scroll-driven stages (light pin) ---- */
+.t1-scrolly {
+  position: relative;
+}
+
+.t1-sticky {
+  position: -webkit-sticky;
+  position: sticky;
+  top: 1rem;
+}
+
+.t1-caption {
+  min-height: 3em;   /* room for two lines so the pinned block does not jump */
 }

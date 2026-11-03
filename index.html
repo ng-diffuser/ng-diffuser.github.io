@@ -21,7 +21,7 @@
   <link rel="stylesheet" href="./static/css/fontawesome.all.min.css">
   <link rel="stylesheet"
         href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
-  <link rel="stylesheet" href="./static/css/index.css?v=20261103b">
+  <link rel="stylesheet" href="./static/css/index.css?v=20261103c">
   <!-- <link rel="icon" href="./static/images/favicon.svg"> -->
 
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
@@ -194,6 +194,8 @@
         <div class="content has-text-justified">
           <p>We compare NGD with baselines that (1) uses only limited expert demonstrations and (2) incorporates prior experience without target-task quality labels. </p>
         </div>
+        <div class="t1-scrolly" id="table1-scrolly">
+        <div class="t1-sticky" id="table1-sticky">
         <div class="gallery-controls">
           <div class="buttons has-addons is-centered" id="table1-stages">
             <button class="button is-rounded" data-stage="0">Expert Only</button>
@@ -203,6 +205,8 @@
         </div>
         <div class="t1-panel" id="table1-panel"></div>
         <p class="t1-caption" id="table1-caption"></p>
+        </div>
+        </div>
 
         <div class="subsection-panel">
           <h4 class="title is-5 gallery-subtitle">Real-Robot Evaluation</h4>
@@ -453,8 +457,12 @@ var TABLE1 = {
     "When incorporating prior experience, DWBC performs poorly on both simulation suites, naive pooling (NP) degrades performance in simulation, and source conditioning (SC) prevents collaspe by distinguishing data source identity.",
     "NGD with an intermediate threshold draws the most benefit from prior experience and achieves the highest success rate in all three settings."
   ],
-  stage: 2,
-  revealed: false
+  stage: 0,
+  revealed: false,
+  // "auto": once the chart scrolls into view the stages play in sequence (no pin).
+  // "pin":  the chart pins briefly and the stages follow the scroll position.
+  mode: "auto",
+  autoDelay: 2200      // ms between stages in auto mode
 };
 
 function buildTable1() {
@@ -508,17 +516,13 @@ function buildTable1() {
   $panel.empty().append($grid);
   renderMath($panel[0]);
 
-  // Buttons.
-  $('#table1-stages button').on('click', function () {
-    var st = parseInt($(this).data('stage'), 10);
-    if (st === TABLE1.stage) return;
-    var replay = st < TABLE1.stage;   // stepping down: regrow the rows that remain
-    TABLE1.stage = st;
-    applyTable1Stage(replay);
-  });
+  if (TABLE1.mode === 'pin') initTable1Scroll(); else initTable1Auto();
 
-  // Animate bars in the first time the panel scrolls into view.
-  if ('IntersectionObserver' in window) {
+  // Animate bars in the first time the panel scrolls into view (pin mode only;
+  // auto mode starts its own sequence).
+  if (TABLE1.mode !== 'pin') {
+    applyTable1Stage();
+  } else if ('IntersectionObserver' in window) {
     var io = new IntersectionObserver(function (entries) {
       entries.forEach(function (e) {
         if (!e.isIntersecting) return;
@@ -533,6 +537,97 @@ function buildTable1() {
     TABLE1.revealed = true;
     applyTable1Stage();
   }
+}
+
+// Auto mode: when the chart comes into view, play Expert Only -> Baselines -> NGD
+// on a timer. Pills select a stage directly and stop the sequence.
+function initTable1Auto() {
+  var block = document.getElementById('table1-scrolly');
+  if (!block) return;
+  var timers = [], played = false;
+
+  function clearTimers() { timers.forEach(clearTimeout); timers = []; }
+  function setStage(st) {
+    if (st === TABLE1.stage) return;
+    var replay = st < TABLE1.stage;
+    TABLE1.stage = st;
+    applyTable1Stage(replay);
+  }
+  function play() {
+    clearTimers();
+    TABLE1.revealed = true;
+    TABLE1.stage = -1;
+    setStage(0);
+    timers.push(setTimeout(function () { setStage(1); }, TABLE1.autoDelay));
+    timers.push(setTimeout(function () { setStage(2); }, 2 * TABLE1.autoDelay));
+  }
+
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (!e.isIntersecting || played) return;
+        played = true;
+        io.unobserve(e.target);
+        play();
+      });
+    }, { threshold: 0.5 });
+    io.observe(block);
+  } else {
+    play();
+  }
+
+  // Pills: pick a stage directly (stops the sequence).
+  $('#table1-stages button').on('click', function () {
+    clearTimers();
+    TABLE1.revealed = true;
+    setStage(parseInt($(this).data('stage'), 10));
+  });
+}
+
+// Pin mode (scroll-driven stages with a light pin): the chart sticks just below the top of
+// the viewport for a short stretch while the stages advance, then scrolls on.
+function initTable1Scroll() {
+  var scrolly = document.getElementById('table1-scrolly');
+  var sticky = document.getElementById('table1-sticky');
+  if (!scrolly || !sticky) return;
+  var STEP_VH = 0.28;     // scroll distance per stage, fraction of viewport height
+  var HOLD = 0.35;        // extra hold (in steps) on the final stage before unpinning
+  var TOP = 16;           // px from the top of the viewport while pinned
+  var step = 0;
+
+  function layout() {
+    step = Math.max(160, window.innerHeight * STEP_VH);
+    sticky.style.top = TOP + 'px';
+    scrolly.style.height = (sticky.offsetHeight + (2 + HOLD) * step) + 'px';
+  }
+
+  function update() {
+    var scrolled = TOP - scrolly.getBoundingClientRect().top;
+    var st = scrolled < step ? 0 : (scrolled < 2 * step ? 1 : 2);
+    if (st !== TABLE1.stage) {
+      var replay = st < TABLE1.stage;   // scrolling back up: regrow the rows that remain
+      TABLE1.stage = st;
+      applyTable1Stage(replay);
+    }
+  }
+
+  var ticking = false;
+  window.addEventListener('scroll', function () {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(function () { update(); ticking = false; });
+  }, { passive: true });
+  window.addEventListener('resize', function () { layout(); update(); });
+
+  // Pills double as navigation: click to scroll to that stage.
+  $('#table1-stages button').on('click', function () {
+    var st = parseInt($(this).data('stage'), 10);
+    var target = window.scrollY + scrolly.getBoundingClientRect().top - TOP + st * step + 2;
+    window.scrollTo({ top: target, behavior: 'smooth' });
+  });
+
+  layout();
+  update();
 }
 
 function applyTable1Stage(replayAll) {
