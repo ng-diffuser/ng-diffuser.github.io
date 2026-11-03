@@ -668,3 +668,85 @@ body {
 .t1-caption {
   min-height: 3em;   /* room for two lines so the pinned block does not jump */
 }
+
+/* ---- Phone layout (Bulma's mobile breakpoint) ---- */
+@media screen and (max-width: 768px) {
+  /* Control rows: let them wrap, label on its own line above the buttons. */
+  .gallery-controls,
+  .gallery-controls-row {
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+  }
+
+  .gallery-controls.gallery-controls-inline {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  .gallery-control-label {
+    white-space: normal;
+    text-align: center;
+    font-size: 1rem;
+  }
+
+  /* Button groups: drop the joined "addons" look and wrap as separate pills. */
+  .gallery-controls .buttons {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.35rem;
+  }
+
+  .gallery-controls .buttons.has-addons .button {
+    border-radius: 9999px !important;
+    margin: 0 !important;
+    font-size: 0.85rem;
+    white-space: normal;
+    text-align: center;
+    height: auto;
+    padding: 0.4em 0.9em;
+  }
+
+  /* Subsection boxes: tighter padding so content gets the width. */
+  .subsection-title {
+    padding: 0 0.5rem 0.5rem;
+  }
+
+  .subsection-body {
+    padding: 1.25rem 1rem 1.25rem;
+  }
+
+  .subsection-panel {
+    margin: 1.25rem -1rem -1.25rem;
+    padding: 1.25rem 1rem 1.25rem;
+  }
+
+  .section-alt > .container,
+  .section-wide > .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  /* Results chart: keep it legible and let it scroll sideways if needed. */
+  .t1-panel {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .t1-grid {
+    min-width: 560px;
+    grid-template-columns: 8rem repeat(var(--t1-cols, 3), minmax(0, 1fr));
+    column-gap: 1rem;
+  }
+
+  .t1-domain { font-size: 1rem; }
+  .t1-label  { font-size: 0.85rem; }
+  .t1-group  { font-size: 0.95rem; }
+  .t1-value  { font-size: 0.72rem; }
+
+  .t1-caption { font-size: 0.95rem; }
+
+  /* Gallery captions a touch smaller. */
+  .gallery-label    { font-size: 1rem; }
+  .gallery-sublabel { font-size: 0.9rem; }
+}
